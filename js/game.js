@@ -1,5 +1,7 @@
 import { Cell } from './Cell.js';
 import { UI } from './UI.js';
+import { Counter } from './Counetr.js';
+import { Timer } from './Timer.js';
 
 class Game extends UI {
 
@@ -21,6 +23,10 @@ class Game extends UI {
         }
     }
 
+
+    #counter = new Counter();
+    #timer = new Timer();
+
     #numberOfRows = null;
     #numberOfCols = null;
     #numberOfMines = null;
@@ -29,15 +35,23 @@ class Game extends UI {
     #board = null;
     #cellsElements = null;
 
+
+
     initializeGame() {
         this.#handleElements();
+        this.#counter.init();
+        this.#timer.init();
         this.#newGame();
     }
 
-    #newGame(rows = this.#config.medium.row, cols = this.#config.medium.col, mines = this.#config.easy.mines) {
+    #newGame(rows = this.#config.easy.row, cols = this.#config.easy.col, mines = this.#config.easy.mines) {
         this.#numberOfRows = rows;
         this.#numberOfCols = cols;
         this.#numberOfMines = mines;
+
+        this.#counter.setValue(this.#numberOfMines);
+
+        this.#timer.startTimer();
 
         this.#setStyles();
         this.#generateCells();
@@ -72,7 +86,27 @@ class Game extends UI {
         document.documentElement.style.setProperty('--cells-in-row', this.#numberOfRows);
     }
 
-    #handleCellContextMenu = e => { }
+    #handleCellContextMenu = e => {
+        e.preventDefault();
+        const target = e.target;
+        const rowIndex = parseInt(target.getAttribute('data-y'), 10);
+        const colIndex = parseInt(target.getAttribute('data-x'), 10);
+
+        const cell = this.#cells[rowIndex][colIndex];
+        if (cell.isRevealed) return;
+
+        if (cell.isFlagged) {
+            this.#counter.increment();
+            cell.toggleFlag();
+            return;
+        }
+
+        if (!!this.#counter.value) {
+            this.#counter.decrement();
+            cell.toggleFlag();
+        }
+
+    }
 
     #handleCellClick = e => {
         const target = e.target;
